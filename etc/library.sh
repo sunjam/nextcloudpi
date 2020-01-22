@@ -282,8 +282,15 @@ function check_distro()
 function clear_password_fields()
 {
   local cfg_file="$1"
-  local cfg="$(jq '.params[] | select(.type == "password") | .value = ""' < "$cfg_file")"
-  echo "$cfg">"$cfg_file"
+  local cfg="$(cat "$cfg_file")"
+  local len="$(jq '.params | length' <<<"$cfg")"
+  for (( i = 0 ; i < len ; i++ )); do
+    local type="$(jq -r ".params[$i].type"  <<<"$cfg")"
+    local val="$( jq -r ".params[$i].value" <<<"$cfg")"
+    [[ "$type" == "password" ]] && val=""
+    cfg="$(jq -r ".params[$i].value=\"$val\"" <<<"$cfg")"
+  done
+  echo "$cfg" > "$cfg_file"
 }
 
 function apt_install()
